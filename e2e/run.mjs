@@ -159,9 +159,18 @@ async function focusBody() {
 // ── Cenários ──
 const scenarios = {
   async dashboard() {
-    const t = await d.bodyText();
-    for (const s of ["Novo projeto", "Edição automática", "21 presets de edição", "E2E Edição", "Gerenciador de IA"]) {
-      if (!t.includes(s)) throw new Error(`dashboard sem "${s}"`);
+    // Projetos e presets chegam por consultas assíncronas logo após a abertura:
+    // espera, em vez de ler a tela uma vez só (falhava às vezes no CI).
+    const want = ["Novo projeto", "Edição automática", "21 presets de edição", "E2E Edição", "Gerenciador de IA"];
+    let missing = want;
+    try {
+      await d.waitFor(async () => {
+        const t = await d.bodyText();
+        missing = want.filter((s) => !t.includes(s));
+        return missing.length === 0;
+      }, { what: "dashboard completo" });
+    } catch {
+      throw new Error(`dashboard sem ${missing.map((s) => `"${s}"`).join(", ")}`);
     }
   },
 
