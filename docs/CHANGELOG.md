@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.2
+
+- **IA local com Python novo demais (achado no primeiro uso real no Windows):**
+  - o app aceitava qualquer Python ≥ 3.10 e, no Windows, `py -3` escolhe o mais novo; com o Python 3.15, que ainda não tem wheels de onnxruntime/av, a instalação dos componentes falharia;
+  - agora só aceita do 3.11 ao 3.14, procurando primeiro as versões suportadas (`py -3.12`, `-3.13`…);
+  - quando só há uma versão sem suporte, o Gerenciador de IA explica qual instalar;
+  - um ambiente já criado com versão sem suporte é recriado ao reinstalar.
+
 ## 0.8.1
 
 - **Vigia contra FFmpeg travado:** um bloco do render sem avançar por 3 min é encerrado e refeito uma vez; a validação profunda tem limite de tempo (4× a duração, mín. 2 min). Antes, um FFmpeg travado deixava a exportação parada para sempre. Isso apareceu no CI do Windows, com um teste de 12 s preso por 3 h.

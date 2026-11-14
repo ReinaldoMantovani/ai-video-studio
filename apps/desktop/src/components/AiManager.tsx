@@ -36,6 +36,7 @@ export function AiManager() {
   };
   const running = (title: string) => Object.values(jobs).find((j) => (j.kind === "ai_install" || j.kind === "ollama_pull") && j.title === title && (j.state === "running" || j.state === "queued"));
   const installed = (id: string) => st?.components.find((c) => c.id === id)?.installed ?? false;
+  const runtimeNote = st?.components.find((c) => c.id === "runtime")?.note;
   const saveSettings = async (patch: Partial<AiSettings>) => {
     if (!st) return;
     try {
@@ -106,7 +107,7 @@ export function AiManager() {
             {!st.system_python && !installed("runtime") && (
               <div className="mb-3 flex gap-2 rounded-lg border border-warn/30 bg-warn/10 p-3 text-xs text-warn">
                 <AlertTriangle size={15} className="shrink-0" />
-                Python 3.10+ não encontrado. Instale-o em python.org (ou defina AVS_PYTHON) para habilitar a IA local. O editor continua funcionando sem IA.
+                {runtimeNote ?? "Python 3.11 a 3.14 não encontrado."} O editor continua funcionando sem IA.
               </div>
             )}
             <div className="overflow-hidden rounded-lg border border-line">

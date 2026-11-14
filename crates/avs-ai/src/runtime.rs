@@ -54,40 +54,76 @@ impl AiPaths {
     }
 }
 
-/// Python do sistema ≥ 3.10 (usado só para criar o venv).
+/// Versões do Python com wheels para todos os componentes. Mínimo: onnxruntime
+/// exige 3.11. Máximo: Python novo demais ainda não tem wheels de onnxruntime/av
+/// (em nov/2026, nada para 3.15) e a instalação falharia no meio, compilando.
+pub const PY_MIN_MINOR: u32 = 11;
+pub const PY_MAX_MINOR: u32 = 14;
+
+pub fn python_supported(version: &str) -> bool {
+    let mut it = version.split('.').map(|x| x.parse::<u32>().unwrap_or(0));
+    let (maj, min) = (it.next().unwrap_or(0), it.next().unwrap_or(0));
+    maj == 3 && (PY_MIN_MINOR..=PY_MAX_MINOR).contains(&min)
+}
+
+/// Python do sistema numa versão suportada (usado só para criar o venv).
 pub fn find_system_python() -> Option<(PathBuf, String)> {
-    let mut cands: Vec<(PathBuf, Vec<&str>)> = vec![];
+    detect_pythons().into_iter().find(|(_, v)| python_supported(v))
+}
+
+/// Todos os Pythons encontrados, na ordem de preferência. No Windows, o
+/// lançador `py` escolhe a versão mais nova com `-3`; por isso as suportadas
+/// são pedidas explicitamente antes (3.12 e 3.13 primeiro: as mais testadas).
+pub fn detect_pythons() -> Vec<(PathBuf, String)> {
+    let mut cands: Vec<(PathBuf, Vec<String>)> = vec![];
     if let Some(p) = std::env::var_os("AVS_PYTHON") {
         cands.push((PathBuf::from(p), vec![]));
+    }
+    if cfg!(windows) {
+        for m in [12, 13, 14, 11] {
+            cands.push((PathBuf::from("py"), vec![format!("-3.{m}")]));
+        }
+    } else {
+        for m in [12, 13, 14, 11] {
+            cands.push((PathBuf::from(format!("python3.{m}")), vec![]));
+        }
     }
     for n in ["python3", "python"] {
         cands.push((PathBuf::from(n), vec![]));
     }
     if cfg!(windows) {
-        cands.push((PathBuf::from("py"), vec!["-3"]));
+        cands.push((PathBuf::from("py"), vec!["-3".into()]));
     }
+    let mut found: Vec<(PathBuf, String)> = vec![];
     for (exe, pre) in cands {
-        let out = Command::new(&exe).args(&pre).args(["-c", "import sys;print('%d.%d.%d'%sys.version_info[:3])"]).stdin(Stdio::null()).output();
-        if let Ok(o) = out {
-            if o.status.success() {
-                let v = String::from_utf8_lossy(&o.stdout).trim().to_string();
-                let mut it = v.split('.').map(|x| x.parse::<u32>().unwrap_or(0));
-                let (maj, min) = (it.next().unwrap_or(0), it.next().unwrap_or(0));
-                if maj == 3 && min >= 10 {
-                    // `py -3` não é um caminho de executável; resolve o real.
-                    let real = Command::new(&exe)
-                        .args(&pre)
-                        .args(["-c", "import sys;print(sys.executable)"])
-                        .output()
-                        .ok()
-                        .map(|o| PathBuf::from(String::from_utf8_lossy(&o.stdout).trim()))
-                        .unwrap_or(exe);
-                    return Some((real, v));
-                }
-            }
+        let out =
+            Command::new(&exe).args(&pre).args(["-c", "import sys;print('%d.%d.%d'%sys.version_info[:3]);print(sys.executable)"]).stdin(Stdio::null()).output();
+        let Ok(o) = out else { continue };
+        if !o.status.success() {
+            continue;
+        }
+        let text = String::from_utf8_lossy(&o.stdout).into_owned();
+        let mut lines = text.lines();
+        let v = lines.next().unwrap_or_default().trim().to_string();
+        // `py -3.x` não é um caminho de executável; usa o real.
+        let real = lines.next().map(|l| PathBuf::from(l.trim())).filter(|p| !p.as_os_str().is_empty()).unwrap_or(exe);
+        if v.starts_with("3.") && !found.iter().any(|(p, _)| *p == real) {
+            found.push((real, v));
         }
     }
-    None
+    found
+}
+
+/// Orientação quando não há Python utilizável (mostrada no Gerenciador de IA).
+pub fn python_help() -> String {
+    let found = detect_pythons();
+    let range = format!("3.{PY_MIN_MINOR} a 3.{PY_MAX_MINOR}");
+    match found.first() {
+        Some((_, v)) => format!(
+            "Python {v} encontrado, mas os componentes de IA só funcionam com o Python {range} (bibliotecas como onnxruntime ainda não existem para versões mais novas). Instale o Python 3.12 ou 3.13 em python.org — ele convive com o {v} — e reabra o app."
+        ),
+        None => format!("Instale o Python {range} (recomendado: 3.12 ou 3.13, em python.org) para habilitar a IA local."),
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -168,10 +204,17 @@ pub fn components(paths: &AiPaths) -> (Vec<AiComponent>, Option<Value>) {
     );
     rt.installed = caps.is_some();
     rt.version = c("python");
-    if !rt.installed {
+    if let Some(v) = rt.version.clone().filter(|v| !python_supported(v)) {
+        // venv antigo com Python sem suporte: reinstalar o recria com um suportado.
+        rt.installed = false;
+        rt.note = Some(match find_system_python() {
+            Some((_, nv)) => format!("O ambiente atual usa o Python {v}, sem suporte. Reinstale para recriá-lo com o Python {nv}."),
+            None => python_help(),
+        });
+    } else if !rt.installed {
         rt.note = Some(match find_system_python() {
             Some((p, v)) => format!("Será criado a partir do Python {v} ({})", p.display()),
-            None => "Instale o Python 3.10+ (python.org) para habilitar a IA local.".into(),
+            None => python_help(),
         });
     }
     out.push(rt);
@@ -301,6 +344,21 @@ fn run_pip(python: &Path, args: &[&str], what: &str, progress: Progress, cancel:
 pub fn install(paths: &AiPaths, id: &str, progress: Progress, cancel: &CancelToken) -> Result<()> {
     let ensure_runtime = |progress: Progress| -> Result<PathBuf> {
         let py = paths.venv_python();
+        // Um venv criado (por versões anteriores do app) com um Python sem suporte
+        // faria a instalação dos pacotes falhar: é refeito com um Python suportado.
+        if py.is_file() {
+            let v = Command::new(&py)
+                .args(["-c", "import sys;print('%d.%d.%d'%sys.version_info[:3])"])
+                .stdin(Stdio::null())
+                .output()
+                .ok()
+                .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+                .unwrap_or_default();
+            if !python_supported(&v) && find_system_python().is_some() {
+                progress(&format!("recriando o ambiente (Python {v} não é suportado)"), 0.01);
+                std::fs::remove_dir_all(paths.venv())?;
+            }
+        }
         if !py.is_file() {
             let (sys_py, v) = find_system_python().ok_or(AiError::PythonNotFound)?;
             progress(&format!("criando ambiente Python {v}"), 0.02);
@@ -372,4 +430,19 @@ pub fn remove(paths: &AiPaths, id: &str) -> Result<()> {
         other => return Err(AiError::Invalid(format!("componente desconhecido: {other}"))),
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod python_version_tests {
+    use super::python_supported;
+
+    #[test]
+    fn supported_range() {
+        for v in ["3.11.9", "3.12.4", "3.13.1", "3.14.0"] {
+            assert!(python_supported(v), "{v}");
+        }
+        for v in ["3.10.12", "3.15.2", "2.7.18", "", "4.0.0"] {
+            assert!(!python_supported(v), "{v}");
+        }
+    }
 }

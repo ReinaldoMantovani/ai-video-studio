@@ -32,7 +32,7 @@ O worker não abre portas de rede, é encerrado ao fim de cada chamada e recebe 
 
 | Componente | O que instala | Download | Licença | Verificado aqui |
 |---|---|---|---|---|
-| Ambiente Python | venv a partir do Python 3.10+ do sistema | ~15 MB | PSF | ✅ |
+| Ambiente Python | venv a partir do Python 3.11–3.14 do sistema (recomendado 3.12 ou 3.13; 3.15 ainda não tem wheels de onnxruntime/av) | ~15 MB | PSF | ✅ |
 | Análise de fala e imagem | numpy, onnxruntime, opencv-python-headless, scenedetect; `silero-vad` com `--no-deps` (só o modelo ONNX, **sem PyTorch**) | ~140 MB | MIT / BSD-3 / Apache-2.0 | ✅ |
 | Detecção de rostos | YuNet 2023mar (OpenCV Zoo), SHA-256 conferido | 0,2 MB | MIT | ✅ |
 | Transcrição | faster-whisper, huggingface_hub | ~120 MB | MIT | ✅ instalado |

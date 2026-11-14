@@ -36,7 +36,7 @@ pub enum AiError {
     ComponentMissing(String),
     #[error("modelo não instalado: {0}")]
     ModelMissing(String),
-    #[error("Python ≥ 3.10 não encontrado. Instale o Python ou defina AVS_PYTHON.")]
+    #[error("Python 3.11 a 3.14 não encontrado (recomendado: 3.12 ou 3.13, em python.org). Instale-o ou defina AVS_PYTHON.")]
     PythonNotFound,
     #[error("falha no worker de IA: {0}")]
     Worker(String),
