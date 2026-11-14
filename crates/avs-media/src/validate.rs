@@ -1,7 +1,7 @@
 //! Validação do arquivo exportado com FFprobe (+ passada de decodificação).
 //! Uma exportação só é considerada concluída se nenhuma verificação falhar.
 
-use crate::ffmpeg::{run_capture, run_stderr, CancelToken, FfmpegTools, Result};
+use crate::ffmpeg::{run_capture, run_stderr_timeout, CancelToken, FfmpegTools, Result};
 use avs_core::*;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -181,7 +181,10 @@ pub fn validate_output(tools: &FfmpegTools, path: &Path, exp: &Expectation, deep
             cmd.args(["-af", "silencedetect=n=-60dB:d=1.5"]);
         }
         cmd.args(["-f", "null", "-"]);
-        let log = run_stderr(cmd, cancel)?;
+        // Decodificar é bem mais rápido que tempo real; 4× a duração (mín. 2 min) só
+        // estoura se o FFmpeg travar.
+        let limit = Duration::from_secs_f64((exp.duration.as_secs_f64() * 4.0).max(120.0));
+        let log = run_stderr_timeout(cmd, cancel, Some(limit))?;
         let decode_errors: Vec<&str> = log
             .lines()
             .filter(|l| {

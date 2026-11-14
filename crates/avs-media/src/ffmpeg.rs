@@ -29,6 +29,8 @@ pub enum MediaError {
     Cancelled,
     #[error("tempo limite excedido após {0:?}")]
     Timeout(Duration),
+    #[error("{tool} parou de responder (sem avançar por {secs} s) e foi encerrado")]
+    Stalled { tool: String, secs: u64 },
     #[error("arquivo inválido ou não suportado: {0}")]
     InvalidMedia(String),
     #[error("timeline inválida: {0}")]
@@ -195,7 +197,13 @@ pub fn run_capture(mut cmd: Command, timeout: Option<Duration>) -> Result<Vec<u8
 }
 
 /// Executa e devolve stderr completo (para filtros de análise como blackdetect).
-pub fn run_stderr(mut cmd: Command, cancel: &CancelToken) -> Result<String> {
+pub fn run_stderr(cmd: Command, cancel: &CancelToken) -> Result<String> {
+    run_stderr_timeout(cmd, cancel, None)
+}
+
+/// Como [`run_stderr`], com limite de tempo: um FFmpeg travado não pode deixar
+/// o job (ou o app) esperando para sempre.
+pub fn run_stderr_timeout(mut cmd: Command, cancel: &CancelToken, timeout: Option<Duration>) -> Result<String> {
     let tool = tool_name(&cmd);
     let mut child = cmd.stdout(Stdio::null()).stderr(Stdio::piped()).spawn().map_err(|e| MediaError::Spawn { tool: tool.clone(), message: e.to_string() })?;
     let mut se = child.stderr.take().unwrap();
@@ -204,6 +212,7 @@ pub fn run_stderr(mut cmd: Command, cancel: &CancelToken) -> Result<String> {
         let _ = se.read_to_end(&mut b);
         b
     });
+    let start = Instant::now();
     let status = loop {
         if let Some(s) = child.try_wait()? {
             break s;
@@ -212,6 +221,14 @@ pub fn run_stderr(mut cmd: Command, cancel: &CancelToken) -> Result<String> {
             let _ = child.kill();
             let _ = child.wait();
             return Err(MediaError::Cancelled);
+        }
+        if let Some(t) = timeout {
+            if start.elapsed() > t {
+                tracing::warn!(target: "avs::ffmpeg", args = ?cmd.get_args().collect::<Vec<_>>(), "tempo limite; encerrando");
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(MediaError::Timeout(t));
+            }
         }
         std::thread::sleep(Duration::from_millis(30));
     };
@@ -222,9 +239,20 @@ pub fn run_stderr(mut cmd: Command, cancel: &CancelToken) -> Result<String> {
     Ok(err)
 }
 
+/// Tempo sem avanço do `out_time` a partir do qual um FFmpeg é considerado travado.
+/// Mesmo efeitos pesados avançam alguns frames por minuto; parado por tanto tempo,
+/// o processo não vai terminar (visto no Windows: render preso por horas).
+pub const STALL_LIMIT: Duration = Duration::from_secs(180);
+
 /// Executa um FFmpeg que tenha `-progress pipe:1 -nostats` e reporta o tempo
 /// de saída processado. `on_progress(out_time)` é chamado a cada atualização.
-pub fn run_with_progress(mut cmd: Command, cancel: &CancelToken, mut on_progress: impl FnMut(Time)) -> Result<()> {
+/// Se o tempo de saída não avançar por [`STALL_LIMIT`], o processo é encerrado
+/// e o erro é [`MediaError::Stalled`].
+pub fn run_with_progress(cmd: Command, cancel: &CancelToken, on_progress: impl FnMut(Time)) -> Result<()> {
+    run_with_progress_limit(cmd, cancel, STALL_LIMIT, on_progress)
+}
+
+pub fn run_with_progress_limit(mut cmd: Command, cancel: &CancelToken, stall_limit: Duration, mut on_progress: impl FnMut(Time)) -> Result<()> {
     let tool = tool_name(&cmd);
     tracing::debug!(target: "avs::ffmpeg", args = ?cmd.get_args().collect::<Vec<_>>(), "spawn");
     let mut child = cmd.stdout(Stdio::piped()).stderr(Stdio::piped()).spawn().map_err(|e| MediaError::Spawn { tool: tool.clone(), message: e.to_string() })?;
@@ -255,12 +283,27 @@ pub fn run_with_progress(mut cmd: Command, cancel: &CancelToken, mut on_progress
         ring.into_iter().collect::<Vec<_>>().join("\n")
     });
 
+    let mut last_t: Option<Time> = None;
+    let mut moved_at = Instant::now();
     let status = loop {
         while let Ok(t) = rx.try_recv() {
+            if last_t != Some(t) {
+                last_t = Some(t);
+                moved_at = Instant::now();
+            }
             on_progress(t);
         }
         if let Some(s) = child.try_wait()? {
             break s;
+        }
+        if moved_at.elapsed() > stall_limit {
+            tracing::warn!(target: "avs::ffmpeg", args = ?cmd.get_args().collect::<Vec<_>>(), "sem progresso; encerrando");
+            let _ = child.kill();
+            let _ = child.wait();
+            let _ = t_out.join();
+            let err = t_err.join().unwrap_or_default();
+            tracing::warn!(target: "avs::ffmpeg", stderr = %tail(&err, 15), "stderr do processo travado");
+            return Err(MediaError::Stalled { tool, secs: stall_limit.as_secs() });
         }
         if cancel.is_cancelled() {
             let _ = child.kill();

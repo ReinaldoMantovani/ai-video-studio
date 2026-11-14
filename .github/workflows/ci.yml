@@ -21,6 +21,9 @@ jobs:
       matrix:
         os: [ubuntu-24.04, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
+    # Normal: ~10 min (Windows, com compilação). Sem limite, um travamento só
+    # seria encerrado pelo GitHub depois de 6 h.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -63,12 +66,14 @@ jobs:
           cargo +1.97.0 fmt --all --check
           cargo +1.97.0 clippy --workspace --all-targets -- -D warnings
       - name: Rust
+        timeout-minutes: 25
         run: cargo test --workspace --exclude ai-video-studio --no-fail-fast && cargo build -p ai-video-studio
 
   e2e:
     name: E2E (Linux, WebDriver)
     runs-on: ubuntu-24.04
     needs: test
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable

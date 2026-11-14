@@ -35,6 +35,7 @@ jobs:
           - { name: macOS Apple Silicon, os: macos-latest, args: "--target aarch64-apple-darwin --bundles app,dmg" }
           - { name: macOS Intel, os: macos-latest, args: "--target x86_64-apple-darwin --bundles app,dmg" }
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
     env:
       # `secrets` não pode ser lido em `if:`; só o fato de existir vira variável.
       HAS_WIN_CERT: ${{ secrets.WINDOWS_CERTIFICATE != '' }}

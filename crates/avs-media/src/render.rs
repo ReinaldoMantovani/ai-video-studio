@@ -336,17 +336,30 @@ pub fn render(
                     write_text_files(&plan.graph)?;
                     std::fs::write(&plan.script, &plan.graph.filter)?;
                     let tmp = plan.file.with_extension(format!("part.{chunk_ext}"));
-                    let mut cmd = tools.ffmpeg_cmd();
-                    cmd.args(&plan.args).arg(&tmp);
                     let fd = fps.frame_duration().flicks().max(1);
-                    let r = run_with_progress(cmd, cancel, |t| {
-                        let f = (t.flicks() / fd).min(plan.graph.frames);
-                        let mut pf = progress_frames.lock().unwrap();
-                        pf[i] = f;
-                        let sum: i64 = pf.iter().sum();
-                        drop(pf);
-                        report(RenderStage::Rendering, render_share * (sum as f32 / total_frames.max(1) as f32));
-                    });
+                    // Um FFmpeg travado é encerrado pelo vigia de `run_with_progress`;
+                    // o bloco é refeito uma vez antes de o erro chegar ao usuário.
+                    let mut attempt = 0;
+                    let r = loop {
+                        let mut cmd = tools.ffmpeg_cmd();
+                        cmd.args(&plan.args).arg(&tmp);
+                        let r = run_with_progress(cmd, cancel, |t| {
+                            let f = (t.flicks() / fd).min(plan.graph.frames);
+                            let mut pf = progress_frames.lock().unwrap();
+                            pf[i] = f;
+                            let sum: i64 = pf.iter().sum();
+                            drop(pf);
+                            report(RenderStage::Rendering, render_share * (sum as f32 / total_frames.max(1) as f32));
+                        });
+                        match r {
+                            Err(MediaError::Stalled { .. }) if attempt == 0 => {
+                                attempt += 1;
+                                tracing::warn!(target: "avs::render", chunk = i, "bloco travado; refazendo");
+                                let _ = std::fs::remove_file(&tmp);
+                            }
+                            other => break other,
+                        }
+                    };
                     if let Err(e) = r {
                         // Bloco parcial nunca entra no cache.
                         let _ = std::fs::remove_file(&tmp);

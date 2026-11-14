@@ -382,3 +382,17 @@ fn hardware_detection_runs() {
     assert!(x264.working, "{x264:?}");
     assert!(avs_media::hwaccel::best_encoder(&enc, "h264", true).is_some());
 }
+
+/// Um processo que não reporta progresso é encerrado pelo vigia, em vez de
+/// prender o render para sempre (visto no Windows do CI).
+#[cfg(unix)]
+#[test]
+fn stalled_process_is_killed() {
+    use avs_media::ffmpeg::{run_with_progress_limit, MediaError};
+    let start = std::time::Instant::now();
+    let mut c = std::process::Command::new("sleep");
+    c.arg("60");
+    let r = run_with_progress_limit(c, &CancelToken::new(), std::time::Duration::from_secs(1), |_| {});
+    assert!(matches!(r, Err(MediaError::Stalled { .. })), "{r:?}");
+    assert!(start.elapsed() < std::time::Duration::from_secs(10));
+}
