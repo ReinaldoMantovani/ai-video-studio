@@ -32,7 +32,8 @@ struct Fx {
 fn fixture() -> Fx {
     let dir = tempfile::tempdir().unwrap();
     // Caminho com espaço, apóstrofo e dois-pontos testa o escape do filtergraph.
-    let root = dir.path().join("proj it's: a test");
+    // No Windows ':' não vale em nomes de pasta; lá o dois-pontos vem da letra do disco.
+    let root = dir.path().join(if cfg!(windows) { "proj it's a test" } else { "proj it's: a test" });
     std::fs::create_dir_all(&root).unwrap();
     let tools = tools();
     gen(

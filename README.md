@@ -90,7 +90,7 @@ npm run tauri build -- --bundles app,dmg             # macOS
 
 - `.deb` e `.rpm` declaram o FFmpeg da distribuição como dependência.
 - O AppImage leva o GStreamer junto (para o preview tocar) e usa o FFmpeg do sistema.
-- No Windows e no macOS, o workflow de release empacota o FFmpeg (`scripts/fetch-ffmpeg.*`).
+- No Windows, o workflow de release empacota o FFmpeg (`scripts/fetch-ffmpeg.ps1`). No macOS, instale com `brew install ffmpeg`: o app o procura também em `/opt/homebrew/bin` e `/usr/local/bin`, pois apps abertos pelo Finder não herdam o PATH do terminal.
 - A assinatura usa secrets do GitHub (ver `.github/workflows/release.yml`).
 
 Neste ambiente, foram gerados e testados o `.deb` (instalado), o `.rpm` e o AppImage. Os de Windows e macOS saem do CI.

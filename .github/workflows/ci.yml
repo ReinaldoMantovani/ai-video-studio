@@ -24,11 +24,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-        with: { components: "clippy, rustfmt" }
       - uses: Swatinem/rust-cache@v2
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm, cache-dependency-path: apps/desktop/package-lock.json }
+      # setup-ffmpeg só tem binários x64; os runners macOS são arm64 → Homebrew.
       - uses: FedericoCarboni/setup-ffmpeg@v3
+        if: runner.os != 'macOS'
+      - name: FFmpeg (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ffmpeg
       - name: Dependências do Tauri (Linux)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev libayatana-appindicator3-dev
@@ -40,11 +44,16 @@ jobs:
         run: |
           cd apps/desktop && npm run bindings
           git diff --exit-code -- src/bindings || (echo "Rode 'npm run bindings' e faça commit." && exit 1)
-      - name: Formatação e Clippy
+      # Lints com versão fixa: cada Rust novo traz lints novos, e `-D warnings` com
+      # `stable` quebraria o CI sem mudança no código. Atualize a versão de propósito.
+      - name: Formatação e Clippy (Rust 1.97)
         if: runner.os == 'Linux'
-        run: cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings
+        run: |
+          rustup toolchain install 1.97.0 --profile minimal -c clippy,rustfmt
+          cargo +1.97.0 fmt --all --check
+          cargo +1.97.0 clippy --workspace --all-targets -- -D warnings
       - name: Rust
-        run: cargo test --workspace --exclude ai-video-studio && cargo build -p ai-video-studio
+        run: cargo test --workspace --exclude ai-video-studio --no-fail-fast && cargo build -p ai-video-studio
 
   e2e:
     name: E2E (Linux, WebDriver)

@@ -22,7 +22,7 @@
   - NSIS/MSI em pt-BR e inglês, DMG para macOS 11+, ícones de todas as plataformas.
   - `.deb`, `.rpm` e AppImage gerados aqui; `.deb` instalado passou nos 14 cenários do E2E; o AppImage passou nos 4 em que foi testado.
 - **CI**: formatação, clippy, bindings TypeScript em dia, testes em Linux/Windows/macOS e E2E no Linux com Xvfb.
-- **Release** (`release.yml`): instaladores das três plataformas numa tag `v*`, FFmpeg empacotado no Windows e macOS, assinatura e notarização opcionais por secrets (nada no repositório).
+- **Release** (`release.yml`): instaladores das três plataformas numa tag `v*`, FFmpeg empacotado no Windows (no macOS, `brew install ffmpeg`), assinatura e notarização opcionais por secrets (nada no repositório).
 - Teste do preview por janelas confere a duração de cada fluxo (vídeo e áudio) do arquivo.
 - Documentação revisada: README, DEVELOPMENT, TESTING (seção E2E), SECURITY (servidor de mídia, distribuição), PERFORMANCE e ARCHITECTURE.
 

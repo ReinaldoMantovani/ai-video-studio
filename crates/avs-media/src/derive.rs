@@ -123,6 +123,10 @@ pub fn make_waveform(tools: &FfmpegTools, asset: &MediaAsset, out: &Path, cancel
     let mut file = std::io::BufWriter::new(std::fs::File::create(out)?);
     let mut buf = vec![0u8; bucket * 2 * 64];
     let (mut peak, mut n, mut written) = (0i32, 0usize, 0u64);
+    // Um pipe pode entregar um número ímpar de bytes: o byte que sobra é o início
+    // da próxima amostra e precisa ser guardado, senão as amostras seguintes saem
+    // desalinhadas (lixo na waveform).
+    let mut carry: Option<u8> = None;
     loop {
         if cancel.is_cancelled() {
             let _ = child.kill();
@@ -133,8 +137,19 @@ pub fn make_waveform(tools: &FfmpegTools, asset: &MediaAsset, out: &Path, cancel
         if read == 0 {
             break;
         }
-        for s in buf[..read & !1].chunks_exact(2) {
-            let v = (i16::from_le_bytes([s[0], s[1]]) as i32).abs();
+        let mut bytes = &buf[..read];
+        let mut first = None;
+        if let Some(lo) = carry.take() {
+            first = Some([lo, bytes[0]]);
+            bytes = &bytes[1..];
+        }
+        if bytes.len() % 2 == 1 {
+            carry = Some(bytes[bytes.len() - 1]);
+            bytes = &bytes[..bytes.len() - 1];
+        }
+        let pairs = bytes.iter().step_by(2).zip(bytes.iter().skip(1).step_by(2)).map(|(&a, &b)| [a, b]);
+        for s in first.into_iter().chain(pairs) {
+            let v = (i16::from_le_bytes(s) as i32).abs();
             peak = peak.max(v);
             n += 1;
             if n == bucket {

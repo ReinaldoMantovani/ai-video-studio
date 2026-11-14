@@ -1,3 +1,5 @@
+// O servidor de mídia só é usado no Linux (WebKitGTK); o teste roda em Unix.
+#![cfg(unix)]
 //! Servidor local de mídia (preview no Linux): acesso restrito e `Range`.
 
 use avs_app::media_server::MediaServer;

@@ -17,7 +17,9 @@ use std::time::{Duration, Instant};
 
 #[derive(Debug, thiserror::Error)]
 pub enum MediaError {
-    #[error("FFmpeg/FFprobe não encontrado. Instale o FFmpeg ou defina AVS_FFMPEG_DIR. ({0})")]
+    #[error(
+        "FFmpeg/FFprobe não encontrado. Instale o FFmpeg (macOS: `brew install ffmpeg`; Linux: `sudo apt install ffmpeg`) ou defina AVS_FFMPEG_DIR. ({0})"
+    )]
     ToolNotFound(String),
     #[error("falha ao executar {tool}: {message}")]
     Spawn { tool: String, message: String },
@@ -73,8 +75,20 @@ fn exe(name: &str) -> String {
 }
 
 fn find_in_path(name: &str) -> Option<PathBuf> {
-    let path = std::env::var_os("PATH")?;
-    std::env::split_paths(&path).map(|d| d.join(exe(name))).find(|p| p.is_file())
+    let path = std::env::var_os("PATH").unwrap_or_default();
+    std::env::split_paths(&path).chain(fallback_dirs()).map(|d| d.join(exe(name))).find(|p| p.is_file())
+}
+
+/// Apps abertos pelo Finder/Dock recebem um PATH mínimo (`/usr/bin:/bin:…`), sem
+/// o Homebrew/MacPorts: um FFmpeg instalado por eles não seria achado.
+fn fallback_dirs() -> Vec<PathBuf> {
+    if cfg!(target_os = "macos") {
+        ["/opt/homebrew/bin", "/usr/local/bin", "/opt/local/bin"].iter().map(PathBuf::from).collect()
+    } else if cfg!(unix) {
+        ["/usr/local/bin", "/usr/bin"].iter().map(PathBuf::from).collect()
+    } else {
+        vec![]
+    }
 }
 
 impl FfmpegTools {

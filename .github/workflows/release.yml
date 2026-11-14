@@ -56,18 +56,17 @@ jobs:
         working-directory: apps/desktop
         run: npm ci
 
-      # Windows e macOS não têm FFmpeg de sistema: vai junto do app (resources/ffmpeg).
-      # No Linux, o .deb/.rpm declaram a dependência do pacote `ffmpeg` da distribuição.
-      # Licença: builds com libx264/libx265 são GPL — ver docs/DEVELOPMENT.md.
+      # Windows: o FFmpeg (build estático "full" do gyan.dev, GPL) vai junto do app
+      # (resources/ffmpeg). macOS: não há build estático arm64 confiável para
+      # empacotar e o do Homebrew depende de dylibs do Homebrew → o usuário instala
+      # com `brew install ffmpeg` (o app procura em /opt/homebrew/bin e /usr/local/bin).
+      # Linux: o .deb/.rpm declaram a dependência do pacote `ffmpeg` da distribuição.
       - uses: FedericoCarboni/setup-ffmpeg@v3
-        if: runner.os != 'Linux'
+        if: runner.os == 'Windows'
       - name: Empacotar FFmpeg (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: scripts/fetch-ffmpeg.ps1
-      - name: Empacotar FFmpeg (macOS)
-        if: runner.os == 'macOS'
-        run: scripts/fetch-ffmpeg.sh
 
       - name: Certificado do Windows (se configurado)
         if: runner.os == 'Windows' && env.HAS_WIN_CERT == 'true'
@@ -112,7 +111,7 @@ jobs:
           args: ${{ matrix.args }} ${{ env.SIGN_ARGS }}
           tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
           releaseName: "AI Video Studio ${{ github.ref_name }}"
-          releaseBody: "Veja o CHANGELOG.md. Windows e macOS: FFmpeg incluído. Linux: o .deb/.rpm instalam o FFmpeg da distribuição como dependência; o AppImage usa o FFmpeg do sistema."
+          releaseBody: "Veja o CHANGELOG.md. Windows: FFmpeg incluído. macOS: instale o FFmpeg com `brew install ffmpeg`. Linux: o .deb/.rpm instalam o FFmpeg da distribuição; o AppImage usa o FFmpeg do sistema."
           releaseDraft: true
           prerelease: false
 
