@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "platforms": [
+    "tiktok"
+  ],
+  "aspect": "9:16",
+  "resolution": {
+    "width": 1080,
+    "height": 1920
+  },
+  "fps": {
+    "num": 30,
+    "den": 1
+  },
+  "duration": {
+    "min_s": null,
+    "max_s": 180,
+    "target_s": 30
+  },
+  "pacing": "very_dynamic",
+  "cuts": {
+    "remove_silence": true,
+    "min_silence_ms": 350,
+    "keep_padding_ms": 80,
+    "preserve_silent_action": false,
+    "remove_fillers": true,
+    "max_shot_s": null,
+    "rules": []
+  },
+  "audio": {
+    "loudness_lufs": -14.0,
+    "true_peak_db": -1.0,
+    "music_ducking_db": -12.0,
+    "noise_reduction": true,
+    "voice_priority": true
+  },
+  "captions": {
+    "enabled": true,
+    "style": "karaoke_dynamic",
+    "position": "center",
+    "max_chars_per_line": 42
+  },
+  "effects": {
+    "allowed": [
+      "zoom",
+      "sound_fx",
+      "text"
+    ],
+    "intensity": "moderate"
+  },
+  "transitions": {
+    "allowed": [
+      "slideleft",
+      "wipeleft",
+      "crossfade"
+    ],
+    "default_duration_ms": 200,
+    "frequency": "moderate"
+  },
+  "reframe": {
+    "mode": "none",
+    "keep_hud": false,
+    "layouts": []
+  },
+  "narrative": {
+    "mode": "short_story",
+    "hook_required": true,
+    "rules": []
+  },
+  "safety": {
+    "safe_area": {
+      "top_pct": 12,
+      "bottom_pct": 22,
+      "left_pct": 6,
+      "right_pct": 14
+    },
+    "rules": [
+      "Textos e legendas dentro da área segura; nunca atrás dos controles da plataforma.",
+      "Não inventar falas, imagens ou acontecimentos.",
+      "Não prometer resultados de visualizações."
+    ]
+  },
+  "export_profile": "tiktok",
+  "scoring_weights": {
+    "semantic_relevance": 0.25,
+    "hook_strength": 0.2,
+    "self_containment": 0.2,
+    "expressiveness": 0.15,
+    "pacing": 0.1,
+    "technical_quality": 0.1
+  },
+  "id": "tiktok_dinamico",
+  "name": "TikTok Dinâmico",
+  "category": "social_vertical",
+  "description": "Ritmo acelerado quando apropriado, hook inicial, cortes sincronizados, legendas destacadas e finalização objetiva."
+}

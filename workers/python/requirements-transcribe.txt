@@ -1,0 +1,3 @@
+# Transcrição: CTranslate2 + modelos Whisper (baixados sob demanda).
+faster-whisper>=1.1
+huggingface_hub>=0.23

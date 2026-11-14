@@ -1,0 +1,2 @@
+# Instalado com --no-deps: só precisamos do modelo ONNX empacotado (MIT).
+silero-vad>=5.1

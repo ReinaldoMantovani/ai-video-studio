@@ -1,0 +1,131 @@
+# Gera os instaladores numa tag `v*` e cria um rascunho de release no GitHub.
+#
+# Assinatura (opcional): sem os secrets abaixo os instaladores saem sem assinatura
+# — funcionam, mas o Windows SmartScreen e o Gatekeeper do macOS vão avisar.
+# Nenhuma chave fica no repositório; tudo vem de secrets do GitHub.
+#
+#   macOS (Developer ID + notarização):
+#     APPLE_CERTIFICATE            .p12 em base64
+#     APPLE_CERTIFICATE_PASSWORD   senha do .p12
+#     APPLE_SIGNING_IDENTITY       ex.: "Developer ID Application: Nome (TEAMID)"
+#     APPLE_ID, APPLE_PASSWORD     Apple ID e senha de app (notarização)
+#     APPLE_TEAM_ID
+#   Windows (Authenticode):
+#     WINDOWS_CERTIFICATE          .pfx em base64
+#     WINDOWS_CERTIFICATE_PASSWORD senha do .pfx
+name: Release
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bundle:
+    name: Instaladores (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # 22.04: glibc mais antiga = .deb/.rpm/AppImage rodam em mais distribuições.
+          - { name: Linux, os: ubuntu-22.04, args: "--bundles deb,rpm,appimage" }
+          - { name: Windows, os: windows-latest, args: "--bundles nsis,msi" }
+          - { name: macOS Apple Silicon, os: macos-latest, args: "--target aarch64-apple-darwin --bundles app,dmg" }
+          - { name: macOS Intel, os: macos-latest, args: "--target x86_64-apple-darwin --bundles app,dmg" }
+    runs-on: ${{ matrix.os }}
+    env:
+      # `secrets` não pode ser lido em `if:`; só o fato de existir vira variável.
+      HAS_WIN_CERT: ${{ secrets.WINDOWS_CERTIFICATE != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ runner.os == 'macOS' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: apps/desktop/package-lock.json }
+      - name: Dependências (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev libayatana-appindicator3-dev patchelf \
+            gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-libav
+      - name: Frontend
+        working-directory: apps/desktop
+        run: npm ci
+
+      # Windows e macOS não têm FFmpeg de sistema: vai junto do app (resources/ffmpeg).
+      # No Linux, o .deb/.rpm declaram a dependência do pacote `ffmpeg` da distribuição.
+      # Licença: builds com libx264/libx265 são GPL — ver docs/DEVELOPMENT.md.
+      - uses: FedericoCarboni/setup-ffmpeg@v3
+        if: runner.os != 'Linux'
+      - name: Empacotar FFmpeg (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: scripts/fetch-ffmpeg.ps1
+      - name: Empacotar FFmpeg (macOS)
+        if: runner.os == 'macOS'
+        run: scripts/fetch-ffmpeg.sh
+
+      - name: Certificado do Windows (se configurado)
+        if: runner.os == 'Windows' && env.HAS_WIN_CERT == 'true'
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          $pfx = Join-Path $env:RUNNER_TEMP "cert.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE))
+          $pw = ConvertTo-SecureString $env:WINDOWS_CERTIFICATE_PASSWORD -AsPlainText -Force
+          $cert = Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\CurrentUser\My -Password $pw
+          Remove-Item $pfx
+          # Sobreposição de configuração só para este build (não vai para o repositório).
+          @{ bundle = @{ windows = @{ certificateThumbprint = $cert.Thumbprint; digestAlgorithm = "sha256"; timestampUrl = "http://timestamp.digicert.com" } } } |
+            ConvertTo-Json -Depth 5 | Set-Content apps/desktop/src-tauri/tauri.sign.json
+          "SIGN_ARGS=--config src-tauri/tauri.sign.json" >> $env:GITHUB_ENV
+
+      - name: Assinatura do macOS (se configurada)
+        if: runner.os == 'macOS'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        # Variáveis vazias fariam o bundler tentar importar um certificado inexistente:
+        # só as que têm valor seguem para o build (o GitHub mascara os valores no log).
+        run: |
+          for v in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+            if [ -n "${!v}" ]; then
+              { echo "$v<<__EOF__"; echo "${!v}"; echo "__EOF__"; } >> "$GITHUB_ENV"
+            fi
+          done
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: apps/desktop
+          args: ${{ matrix.args }} ${{ env.SIGN_ARGS }}
+          tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          releaseName: "AI Video Studio ${{ github.ref_name }}"
+          releaseBody: "Veja o CHANGELOG.md. Windows e macOS: FFmpeg incluído. Linux: o .deb/.rpm instalam o FFmpeg da distribuição como dependência; o AppImage usa o FFmpeg do sistema."
+          releaseDraft: true
+          prerelease: false
+
+      - name: Instaladores como artefatos (execução manual)
+        if: github.ref_type != 'tag'
+        uses: actions/upload-artifact@v4
+        with:
+          name: instaladores-${{ runner.os }}-${{ strategy.job-index }}
+          path: |
+            target/**/release/bundle/**/*.deb
+            target/**/release/bundle/**/*.rpm
+            target/**/release/bundle/**/*.AppImage
+            target/**/release/bundle/**/*.msi
+            target/**/release/bundle/**/*-setup.exe
+            target/**/release/bundle/**/*.dmg
+          if-no-files-found: ignore

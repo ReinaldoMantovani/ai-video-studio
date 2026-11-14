@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "platforms": [],
+  "aspect": "16:9",
+  "resolution": {
+    "width": 1920,
+    "height": 1080
+  },
+  "fps": null,
+  "duration": {
+    "min_s": null,
+    "max_s": null,
+    "target_s": null
+  },
+  "pacing": "natural",
+  "cuts": {
+    "remove_silence": false,
+    "min_silence_ms": 700,
+    "keep_padding_ms": 150,
+    "preserve_silent_action": false,
+    "remove_fillers": false,
+    "max_shot_s": null,
+    "rules": []
+  },
+  "audio": {
+    "loudness_lufs": -14.0,
+    "true_peak_db": -1.0,
+    "music_ducking_db": -12.0,
+    "noise_reduction": false,
+    "voice_priority": true
+  },
+  "captions": {
+    "enabled": false,
+    "style": "clean_minimal",
+    "position": "bottom",
+    "max_chars_per_line": 42
+  },
+  "effects": {
+    "allowed": [],
+    "intensity": "off"
+  },
+  "transitions": {
+    "allowed": [
+      "crossfade"
+    ],
+    "default_duration_ms": 400,
+    "frequency": "rare"
+  },
+  "reframe": {
+    "mode": "none",
+    "keep_hud": false,
+    "layouts": []
+  },
+  "narrative": {
+    "mode": "preserve",
+    "hook_required": false,
+    "rules": []
+  },
+  "safety": {
+    "safe_area": {
+      "top_pct": 5,
+      "bottom_pct": 5,
+      "left_pct": 5,
+      "right_pct": 5
+    },
+    "rules": [
+      "Não inventar falas, imagens ou acontecimentos.",
+      "Não prometer resultados de visualizações."
+    ]
+  },
+  "export_profile": "youtube_1080p",
+  "scoring_weights": {},
+  "id": "personalizado",
+  "name": "Personalizado",
+  "category": "custom",
+  "description": "Ponto de partida neutro para criar seus próprios presets. Duplique e ajuste."
+}

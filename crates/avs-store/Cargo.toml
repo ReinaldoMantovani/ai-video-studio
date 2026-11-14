@@ -1,0 +1,19 @@
+[package]
+name = "avs-store"
+description = "AI Video Studio — persistência: SQLite (WAL), arquivos de projeto versionados, snapshots e autosave"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+avs-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+rusqlite.workspace = true
+chrono.workspace = true
+ts-rs.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

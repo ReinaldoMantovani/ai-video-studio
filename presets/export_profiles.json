@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "profiles": [
+    {
+      "id": "youtube_1080p",
+      "name": "YouTube Horizontal 1080p",
+      "platform": "youtube",
+      "container": "mp4",
+      "codec": "h264",
+      "resolution": {
+        "width": 1920,
+        "height": 1080
+      },
+      "fps": null,
+      "quality": 19,
+      "speed": "medium",
+      "bitrate_kbps": null,
+      "audio_bitrate_kbps": 192,
+      "loudness_lufs": -14.0,
+      "max_duration_s": null,
+      "notes": "Valores editoriais iniciais. Especificações de plataformas mudam: revise e atualize este arquivo."
+    },
+    {
+      "id": "youtube_4k",
+      "name": "YouTube Horizontal 4K",
+      "platform": "youtube",
+      "container": "mp4",
+      "codec": "h264",
+      "resolution": {
+        "width": 3840,
+        "height": 2160
+      },
+      "fps": null,
+      "quality": 18,
+      "speed": "medium",
+      "bitrate_kbps": null,
+      "audio_bitrate_kbps": 192,
+      "loudness_lufs": -14.0,
+      "max_duration_s": null,
+      "notes": "Valores editoriais iniciais. Especificações de plataformas mudam: revise e atualize este arquivo."
+    },
+    {
+      "id": "youtube_shorts",
+      "name": "YouTube Shorts",
+      "platform": "youtube_shorts",
+      "container": "mp4",
+      "codec": "h264",
+      "resolution": {
+        "width": 1080,
+        "height": 1920
+      },
+      "fps": null,
+      "quality": 19,
+      "speed": "medium",
+      "bitrate_kbps": null,
+      "audio_bitrate_kbps": 192,
+      "loudness_lufs": -14.0,
+      "max_duration_s": 180,
+      "notes": "Valores editoriais iniciais. Especificações de plataformas mudam: revise e atualize este arquivo."
+    },
+    {
+      "id": "instagram_reels",
+      "name": "Instagram Reels",
+      "platform": "instagram_reels",
+      "container": "mp4",
+      "codec": "h264",
+      "resolution": {
+        "width": 1080,
+        "height": 1920
+      },
+      "fps": null,
+      "quality": 20,
+      "speed": "medium",
+      "bitrate_kbps": null,
+      "audio_bitrate_kbps": 192,
+      "loudness_lufs": -14.0,
+      "max_duration_s": 180,
+      "notes": "Valores editoriais iniciais. Especificações de plataformas mudam: revise e atualize este arquivo."
+    },
+    {
+      "id": "facebook_reels",
+      "name": "Facebook Reels",
+      "platform": "facebook_reels",
+      "container": "mp4",
+      "codec": "h264",
+      "resolution": {
+        "width": 1080,
+        "height": 1920
+      },
+      "fps": null,
+      "quality": 20,
+      "speed": "medium",
+      "bitrate_kbps": null,
+      "audio_bitrate_kbps": 192,
+      "loudness_lufs": -14.0,
+      "max_duration_s": 180,
+      "notes": "Valores editoriais iniciais. Especificações de plataformas mudam: revise e atualize este arquivo."
+    },
+    {
+      "id": "tiktok",
+      "name": "TikTok",
+      "platform": "tiktok",
+      "container": "mp4",
+      "codec": "h264",
+      "resolution": {
+        "width": 1080,
+        "height": 1920
+      },
+      "fps": null,
+      "quality": 20,
+      "speed": "medium",
+      "bitrate_kbps": null,
+      "audio_bitrate_kbps": 192,
+      "loudness_lufs": -14.0,
+      "max_duration_s": 180,
+      "notes": "Valores editoriais iniciais. Especificações de plataformas mudam: revise e atualize este arquivo."
+    },
+    {
+      "id": "linkedin",
+      "name": "LinkedIn",
+      "platform": "linkedin",
+      "container": "mp4",
+      "codec": "h264",
+      "resolution": {
+        "width": 1920,
+        "height": 1080
+      },
+      "fps": null,
+      "quality": 20,
+      "speed": "medium",
+      "bitrate_kbps": null,
+      "audio_bitrate_kbps": 192,
+      "loudness_lufs": -16.0,
+      "max_duration_s": null,
+      "notes": "Valores editoriais iniciais. Especificações de plataformas mudam: revise e atualize este arquivo."
+    },
+    {
+      "id": "high_quality",
+      "name": "Arquivo de alta qualidade",
+      "platform": "master",
+      "container": "mp4",
+      "codec": "h264",
+      "resolution": null,
+      "fps": null,
+      "quality": 14,
+      "speed": "slow",
+      "bitrate_kbps": null,
+      "audio_bitrate_kbps": 320,
+      "loudness_lufs": null,
+      "max_duration_s": null,
+      "notes": "Resolução e FPS do projeto, sem normalização de loudness."
+    },
+    {
+      "id": "hevc_archive",
+      "name": "H.265/HEVC (arquivo menor)",
+      "platform": "master",
+      "container": "mp4",
+      "codec": "hevc",
+      "resolution": null,
+      "fps": null,
+      "quality": 22,
+      "speed": "medium",
+      "bitrate_kbps": null,
+      "audio_bitrate_kbps": 256,
+      "loudness_lufs": null,
+      "max_duration_s": null,
+      "notes": "Valores editoriais iniciais. Especificações de plataformas mudam: revise e atualize este arquivo."
+    },
+    {
+      "id": "web_vp9",
+      "name": "WebM VP9",
+      "platform": "web",
+      "container": "webm",
+      "codec": "vp9",
+      "resolution": null,
+      "fps": null,
+      "quality": 32,
+      "speed": "medium",
+      "bitrate_kbps": null,
+      "audio_bitrate_kbps": 160,
+      "loudness_lufs": null,
+      "max_duration_s": null,
+      "notes": "Valores editoriais iniciais. Especificações de plataformas mudam: revise e atualize este arquivo."
+    }
+  ]
+}

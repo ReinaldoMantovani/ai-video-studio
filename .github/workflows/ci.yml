@@ -1,0 +1,74 @@
+name: CI
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Testes (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with: { components: "clippy, rustfmt" }
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: apps/desktop/package-lock.json }
+      - uses: FedericoCarboni/setup-ffmpeg@v3
+      - name: Dependências do Tauri (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev libayatana-appindicator3-dev
+      - name: Frontend (tipos, testes, build)
+        working-directory: apps/desktop
+        run: npm ci && npm run typecheck && npm test && npx vite build
+      - name: Bindings TS em dia
+        if: runner.os == 'Linux'
+        run: |
+          cd apps/desktop && npm run bindings
+          git diff --exit-code -- src/bindings || (echo "Rode 'npm run bindings' e faça commit." && exit 1)
+      - name: Formatação e Clippy
+        if: runner.os == 'Linux'
+        run: cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings
+      - name: Rust
+        run: cargo test --workspace --exclude ai-video-studio && cargo build -p ai-video-studio
+
+  e2e:
+    name: E2E (Linux, WebDriver)
+    runs-on: ubuntu-24.04
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: apps/desktop/package-lock.json }
+      - name: Dependências (Tauri, WebKitWebDriver, GStreamer, FFmpeg, Xvfb)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev libayatana-appindicator3-dev \
+            webkit2gtk-driver xvfb ffmpeg gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-libav
+          cargo install tauri-driver --locked
+      - name: Build (release com o frontend embutido)
+        run: |
+          cd apps/desktop && npm ci && npm run build && cd ../..
+          cargo build --release -p ai-video-studio --features custom-protocol -p avs-cli
+      - name: Cenários E2E
+        run: xvfb-run -a -s "-screen 0 1440x900x24" node e2e/run.mjs
+      - name: Artefatos (capturas e texto da tela em caso de falha)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: e2e-artifacts, path: e2e/artifacts, if-no-files-found: ignore }

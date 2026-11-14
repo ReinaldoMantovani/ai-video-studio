@@ -1,0 +1,101 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "AI Video Studio",
+  "version": "0.8.0",
+  "identifier": "studio.aivideo.app",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "AI Video Studio",
+        "width": 1480,
+        "height": 920,
+        "minWidth": 1100,
+        "minHeight": 680,
+        "dragDropEnabled": true,
+        "backgroundColor": "#0d0e12"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' asset: http://asset.localhost data: blob:; media-src 'self' asset: http://asset.localhost http://127.0.0.1:* blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src ipc: http://ipc.localhost",
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "$APPDATA/projects/**"
+        ]
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "deb",
+      "rpm",
+      "appimage",
+      "nsis",
+      "msi",
+      "dmg",
+      "app"
+    ],
+    "category": "Video",
+    "shortDescription": "Editor de vídeo com IA local",
+    "resources": {
+      "../../../presets/": "presets/",
+      "resources/": "resources/",
+      "../../../workers/python/avs_worker/": "workers/python/avs_worker/",
+      "../../../workers/python/requirements-core.txt": "workers/python/requirements-core.txt",
+      "../../../workers/python/requirements-vad-model.txt": "workers/python/requirements-vad-model.txt",
+      "../../../workers/python/requirements-transcribe.txt": "workers/python/requirements-transcribe.txt"
+    },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "publisher": "AI Video Studio",
+    "copyright": "© 2026 AI Video Studio",
+    "longDescription": "Editor de vídeo desktop com IA local: edição manual completa, edição automática por presets, cortes verticais, assistente em português e exportação validada. Funciona offline; nenhuma mídia é enviada para a nuvem.",
+    "linux": {
+      "deb": {
+        "depends": [
+          "ffmpeg"
+        ],
+        "section": "video"
+      },
+      "rpm": {
+        "depends": [
+          "ffmpeg"
+        ]
+      },
+      "appimage": {
+        "bundleMediaFramework": true
+      }
+    },
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": [
+          "PortugueseBR",
+          "English"
+        ],
+        "displayLanguageSelector": true
+      },
+      "wix": {
+        "language": [
+          "pt-BR",
+          "en-US"
+        ]
+      }
+    },
+    "macOS": {
+      "minimumSystemVersion": "11.0"
+    }
+  }
+}

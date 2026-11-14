@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "platforms": [
+    "youtube_shorts",
+    "tiktok",
+    "instagram_reels"
+  ],
+  "aspect": "9:16",
+  "resolution": {
+    "width": 1080,
+    "height": 1920
+  },
+  "fps": {
+    "num": 30,
+    "den": 1
+  },
+  "duration": {
+    "min_s": null,
+    "max_s": 180,
+    "target_s": 60
+  },
+  "pacing": "natural",
+  "cuts": {
+    "remove_silence": true,
+    "min_silence_ms": 600,
+    "keep_padding_ms": 150,
+    "preserve_silent_action": false,
+    "remove_fillers": true,
+    "max_shot_s": null,
+    "rules": [
+      "Priorizar perguntas e respostas completas.",
+      "Nunca cortar uma frase antes da conclusão."
+    ]
+  },
+  "audio": {
+    "loudness_lufs": -14.0,
+    "true_peak_db": -1.0,
+    "music_ducking_db": -12.0,
+    "noise_reduction": true,
+    "voice_priority": true
+  },
+  "captions": {
+    "enabled": true,
+    "style": "podcast_premium",
+    "position": "center_low",
+    "max_chars_per_line": 42
+  },
+  "effects": {
+    "allowed": [
+      "zoom",
+      "color_correction"
+    ],
+    "intensity": "subtle"
+  },
+  "transitions": {
+    "allowed": [
+      "crossfade"
+    ],
+    "default_duration_ms": 400,
+    "frequency": "rare"
+  },
+  "reframe": {
+    "mode": "speaker_tracking",
+    "keep_hud": false,
+    "layouts": [
+      "speaker_tracking",
+      "split_screen"
+    ]
+  },
+  "narrative": {
+    "mode": "best_moments",
+    "hook_required": true,
+    "rules": [
+      "Preservar o sentido das falas.",
+      "Detectar mudanças de locutor."
+    ]
+  },
+  "safety": {
+    "safe_area": {
+      "top_pct": 12,
+      "bottom_pct": 22,
+      "left_pct": 6,
+      "right_pct": 14
+    },
+    "rules": [
+      "Textos e legendas dentro da área segura; nunca atrás dos controles da plataforma.",
+      "Não inventar falas, imagens ou acontecimentos.",
+      "Não prometer resultados de visualizações."
+    ]
+  },
+  "export_profile": "youtube_shorts",
+  "scoring_weights": {
+    "semantic_relevance": 0.25,
+    "hook_strength": 0.2,
+    "self_containment": 0.2,
+    "expressiveness": 0.15,
+    "pacing": 0.1,
+    "technical_quality": 0.1
+  },
+  "id": "podcast_viral",
+  "name": "Podcast Viral",
+  "category": "podcast",
+  "description": "Cortes de podcast com argumentos interessantes, perguntas e respostas completas, reenquadramento de quem fala e legendas dinâmicas."
+}

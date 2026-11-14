@@ -1,0 +1,23 @@
+[package]
+name = "avs-app"
+description = "AI Video Studio — camada de serviço: projetos, importação, fila de jobs, preview, exportação, presets e sistema"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+avs-core.workspace = true
+avs-media.workspace = true
+avs-store.workspace = true
+avs-ai.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+ts-rs.workspace = true
+uuid.workspace = true
+sysinfo.workspace = true
+chrono.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

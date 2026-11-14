@@ -1,0 +1,106 @@
+{
+  "app_peak_mb": 20.9765625,
+  "children_peak_mb": 811.95703125,
+  "ffmpeg": "6.1.1-3ubuntu5",
+  "minutes": 30.0,
+  "resolution": "1280x720",
+  "stages": [
+    {
+      "app_peak_mb": 8.93359375,
+      "children_peak_mb": 103.3671875,
+      "detail": "1280x720, 30 min, 1204 MB, fala espeak-ng",
+      "ms": 115608,
+      "stage": "gerar mídia sintética"
+    },
+    {
+      "app_peak_mb": 11.7421875,
+      "children_peak_mb": 103.3671875,
+      "detail": "proxy: não necessário",
+      "ms": 10160,
+      "stage": "importar (probe, poster, miniaturas, waveform, proxy)"
+    },
+    {
+      "app_peak_mb": 11.7421875,
+      "children_peak_mb": 103.3671875,
+      "detail": "",
+      "ms": 1,
+      "stage": "colocar na timeline"
+    },
+    {
+      "app_peak_mb": 14.890625,
+      "children_peak_mb": 114.390625,
+      "detail": "fala: 270 trechos (silero), cenas: pyscenedetect, amostras de imagem: 900",
+      "ms": 132534,
+      "stage": "análise (fala, cenas, imagem)"
+    },
+    {
+      "app_peak_mb": 14.890625,
+      "children_peak_mb": 114.390625,
+      "detail": "134 cortes, 1800 s → 1584 s, 135 clipes",
+      "ms": 3,
+      "stage": "remover pausas (plano + aplicação)"
+    },
+    {
+      "app_peak_mb": 14.890625,
+      "children_peak_mb": 114.390625,
+      "detail": "0 ponto(s)",
+      "ms": 2,
+      "stage": "revisão de qualidade"
+    },
+    {
+      "app_peak_mb": 14.890625,
+      "children_peak_mb": 114.390625,
+      "detail": "5 sugestões",
+      "ms": 4,
+      "stage": "sugerir cortes verticais"
+    },
+    {
+      "app_peak_mb": 14.890625,
+      "children_peak_mb": 114.390625,
+      "detail": "pior frame: 137 ms",
+      "ms": 595,
+      "stage": "scrubbing (5 frames em pontos aleatórios, 540p)"
+    },
+    {
+      "app_peak_mb": 14.890625,
+      "children_peak_mb": 114.390625,
+      "detail": "desfazer 2 ms, refazer 1 ms",
+      "ms": 4,
+      "stage": "desfazer + refazer na timeline longa"
+    },
+    {
+      "app_peak_mb": 14.890625,
+      "children_peak_mb": 114.390625,
+      "detail": "195 KB",
+      "ms": 1,
+      "stage": "salvar projeto"
+    },
+    {
+      "app_peak_mb": 20.83203125,
+      "children_peak_mb": 633.4296875,
+      "detail": "libx264 (73422 ms de codificação+validação)",
+      "ms": 80674,
+      "stage": "exportar 60 s do meio (1080p + validação completa)"
+    },
+    {
+      "app_peak_mb": 20.9765625,
+      "children_peak_mb": 811.95703125,
+      "detail": "47.0 s de vídeo",
+      "ms": 84055,
+      "stage": "criar e exportar 1 corte vertical (1080x1920)"
+    }
+  ],
+  "system": {
+    "cpu_brand": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "cpu_cores": 2,
+    "cpu_usage_pct": 88.81559753417969,
+    "disk_free": 4210319360,
+    "ffmpeg_version": "6.1.1-3ubuntu5",
+    "gpus": [],
+    "memory_total": 8412131328,
+    "memory_used": 575635456,
+    "os": "Ubuntu 24.04"
+  },
+  "total_ms": 423641,
+  "version": "0.6.0"
+}

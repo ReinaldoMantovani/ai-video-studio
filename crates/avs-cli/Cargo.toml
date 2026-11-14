@@ -1,0 +1,21 @@
+[package]
+name = "avs-cli"
+description = "AI Video Studio — CLI headless (automação, testes E2E e benchmarks)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "avs"
+path = "src/main.rs"
+
+[dependencies]
+avs-app.workspace = true
+avs-ai.workspace = true
+libc = "0.2"
+avs-core.workspace = true
+avs-media.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+clap = { version = "4", features = ["derive"] }
+tracing-subscriber.workspace = true

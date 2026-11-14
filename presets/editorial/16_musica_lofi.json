@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "platforms": [
+    "youtube"
+  ],
+  "aspect": "16:9",
+  "resolution": {
+    "width": 1920,
+    "height": 1080
+  },
+  "fps": null,
+  "duration": {
+    "min_s": null,
+    "max_s": null,
+    "target_s": null
+  },
+  "pacing": "calm",
+  "cuts": {
+    "remove_silence": false,
+    "min_silence_ms": 700,
+    "keep_padding_ms": 150,
+    "preserve_silent_action": false,
+    "remove_fillers": false,
+    "max_shot_s": null,
+    "rules": []
+  },
+  "audio": {
+    "loudness_lufs": -14.0,
+    "true_peak_db": -1.0,
+    "music_ducking_db": -12.0,
+    "noise_reduction": false,
+    "voice_priority": false
+  },
+  "captions": {
+    "enabled": false,
+    "style": "clean_minimal",
+    "position": "bottom",
+    "max_chars_per_line": 42
+  },
+  "effects": {
+    "allowed": [
+      "loop",
+      "subtle_animation"
+    ],
+    "intensity": "subtle"
+  },
+  "transitions": {
+    "allowed": [
+      "crossfade"
+    ],
+    "default_duration_ms": 1500,
+    "frequency": "rare"
+  },
+  "reframe": {
+    "mode": "none",
+    "keep_hud": false,
+    "layouts": []
+  },
+  "narrative": {
+    "mode": "preserve",
+    "hook_required": false,
+    "rules": [
+      "Evitar cortes abruptos e efeitos excessivos.",
+      "Suporte a loops."
+    ]
+  },
+  "safety": {
+    "safe_area": {
+      "top_pct": 5,
+      "bottom_pct": 5,
+      "left_pct": 5,
+      "right_pct": 5
+    },
+    "rules": [
+      "Não inventar falas, imagens ou acontecimentos.",
+      "Não prometer resultados de visualizações."
+    ]
+  },
+  "export_profile": "youtube_1080p",
+  "scoring_weights": {},
+  "id": "musica_lofi",
+  "name": "Música / LoFi",
+  "category": "music",
+  "description": "Ritmo visual lento, transições suaves, elementos discretos e preservação da qualidade de áudio."
+}

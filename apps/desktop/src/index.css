@@ -1,0 +1,133 @@
+@import "@fontsource-variable/manrope";
+@import "tailwindcss";
+
+/*
+ * Tokens do AI Video Studio.
+ * Grafite profundo em quatro níveis de elevação; um único acento azul-violeta.
+ * As cores de clipe codificam o tipo de trilha (vídeo, texto, áudio).
+ */
+@theme {
+  --font-sans: "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink-0: #0d0e12;   /* fundo da janela */
+  --color-ink-1: #14161c;   /* painéis */
+  --color-ink-2: #1b1e26;   /* superfícies elevadas, inputs */
+  --color-ink-3: #252935;   /* hover, divisórias fortes */
+  --color-line: #2a2f3b;
+  --color-fg: #e8e9f0;
+  --color-fg-2: #a3a8b8;
+  --color-fg-3: #6e7486;
+
+  --color-accent: #8b7cf6;
+  --color-accent-strong: #6f5cf0;
+  --color-accent-soft: #8b7cf622;
+
+  --color-clip-video: #4a3fa3;
+  --color-clip-video-edge: #8b7cf6;
+  --color-clip-text: #6b3f86;
+  --color-clip-text-edge: #c58cf0;
+  --color-clip-audio: #1d5463;
+  --color-clip-audio-edge: #4fc3d9;
+
+  --color-ok: #4ade80;
+  --color-warn: #f5b84b;
+  --color-bad: #f2667a;
+
+  --radius-panel: 10px;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+select option,
+select optgroup {
+  background: var(--color-ink-2);
+  color: var(--color-fg);
+}
+
+body {
+  margin: 0;
+  background: var(--color-ink-0);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  overflow: hidden;
+}
+
+input,
+textarea,
+select {
+  user-select: text;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-ink-3);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+input[type="range"] {
+  accent-color: var(--color-accent);
+}
+
+@keyframes avs-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.avs-pulse {
+  animation: avs-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes avs-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.avs-in {
+  animation: avs-in 140ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

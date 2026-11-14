@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "platforms": [
+    "linkedin"
+  ],
+  "aspect": "16:9",
+  "resolution": {
+    "width": 1920,
+    "height": 1080
+  },
+  "fps": null,
+  "duration": {
+    "min_s": null,
+    "max_s": null,
+    "target_s": null
+  },
+  "pacing": "natural",
+  "cuts": {
+    "remove_silence": true,
+    "min_silence_ms": 700,
+    "keep_padding_ms": 150,
+    "preserve_silent_action": false,
+    "remove_fillers": false,
+    "max_shot_s": null,
+    "rules": []
+  },
+  "audio": {
+    "loudness_lufs": -16.0,
+    "true_peak_db": -1.0,
+    "music_ducking_db": -12.0,
+    "noise_reduction": true,
+    "voice_priority": true
+  },
+  "captions": {
+    "enabled": true,
+    "style": "clean_minimal",
+    "position": "bottom",
+    "max_chars_per_line": 42
+  },
+  "effects": {
+    "allowed": [
+      "text",
+      "lower_third",
+      "color_correction"
+    ],
+    "intensity": "subtle"
+  },
+  "transitions": {
+    "allowed": [
+      "crossfade"
+    ],
+    "default_duration_ms": 400,
+    "frequency": "rare"
+  },
+  "reframe": {
+    "mode": "none",
+    "keep_hud": false,
+    "layouts": []
+  },
+  "narrative": {
+    "mode": "summarize",
+    "hook_required": false,
+    "rules": [
+      "Priorizar legibilidade e credibilidade."
+    ]
+  },
+  "safety": {
+    "safe_area": {
+      "top_pct": 5,
+      "bottom_pct": 5,
+      "left_pct": 5,
+      "right_pct": 5
+    },
+    "rules": [
+      "Não inventar falas, imagens ou acontecimentos.",
+      "Não prometer resultados de visualizações."
+    ]
+  },
+  "export_profile": "linkedin",
+  "scoring_weights": {},
+  "id": "linkedin_corporativo",
+  "name": "LinkedIn / Corporativo",
+  "category": "corporate",
+  "description": "Visual profissional, transições limpas, legendas discretas, ritmo moderado e redução de ruído."
+}
