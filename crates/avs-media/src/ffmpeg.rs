@@ -6,6 +6,7 @@
 //! - Cancelamento cooperativo: o processo filho é finalizado.
 //! - Erros carregam o final do stderr do FFmpeg para diagnóstico.
 
+use crate::process::command;
 use avs_core::Time;
 use std::collections::VecDeque;
 use std::io::{BufRead, BufReader, Read};
@@ -110,11 +111,8 @@ impl FfmpegTools {
         let pick = |name: &str| dirs.iter().map(|d| d.join(exe(name))).find(|p| p.is_file()).or_else(|| find_in_path(name));
         let ffmpeg = pick("ffmpeg").ok_or_else(|| MediaError::ToolNotFound("ffmpeg".into()))?;
         let ffprobe = pick("ffprobe").ok_or_else(|| MediaError::ToolNotFound("ffprobe".into()))?;
-        let out = Command::new(&ffmpeg)
-            .arg("-version")
-            .stdin(Stdio::null())
-            .output()
-            .map_err(|e| MediaError::Spawn { tool: "ffmpeg".into(), message: e.to_string() })?;
+        let out =
+            command(&ffmpeg).arg("-version").stdin(Stdio::null()).output().map_err(|e| MediaError::Spawn { tool: "ffmpeg".into(), message: e.to_string() })?;
         let first = String::from_utf8_lossy(&out.stdout).lines().next().unwrap_or_default().to_string();
         // "ffmpeg version 6.1.1-3ubuntu5 ..." | "ffmpeg version n7.0 ..." | "ffmpeg version N-1234-g..."
         let ver = first.split_whitespace().nth(2).unwrap_or("").to_string();
@@ -123,13 +121,13 @@ impl FfmpegTools {
     }
 
     pub fn ffmpeg_cmd(&self) -> Command {
-        let mut c = Command::new(&self.ffmpeg);
+        let mut c = command(&self.ffmpeg);
         c.arg("-hide_banner").arg("-nostdin").stdin(Stdio::null());
         no_window(&mut c);
         c
     }
     pub fn ffprobe_cmd(&self) -> Command {
-        let mut c = Command::new(&self.ffprobe);
+        let mut c = command(&self.ffprobe);
         c.arg("-hide_banner").stdin(Stdio::null());
         no_window(&mut c);
         c

@@ -37,6 +37,23 @@ export function AiManager() {
   const running = (title: string) => Object.values(jobs).find((j) => (j.kind === "ai_install" || j.kind === "ollama_pull") && j.title === title && (j.state === "running" || j.state === "queued"));
   const installed = (id: string) => st?.components.find((c) => c.id === id)?.installed ?? false;
   const runtimeNote = st?.components.find((c) => c.id === "runtime")?.note;
+  const isWindows = navigator.userAgent.includes("Windows");
+  const nameOf = (id: string) => st?.components.find((c) => c.id === id)?.name ?? id;
+  // Pacote recomendado: tudo o que a edição automática usa, com o Whisper do perfil.
+  const recModel = st?.settings.whisper_model ?? st?.effective.whisper_model ?? "small";
+  const recIds = ["analysis", "faces", "transcription", `whisper:${recModel}`];
+  const recMissing = st ? recIds.filter((id) => !installed(id)) : [];
+  const recJob = running("Instalar IA recomendada");
+  const recError = lastError("Instalar IA recomendada");
+  const pyJob = running("Instalar Python 3.13");
+  const pyError = lastError("Instalar Python 3.13");
+  const install = async (id: string) => {
+    try {
+      await api.aiInstall(id);
+    } catch (e) {
+      toast("error", errorMessage(e));
+    }
+  };
   const saveSettings = async (patch: Partial<AiSettings>) => {
     if (!st) return;
     try {
@@ -105,9 +122,37 @@ export function AiManager() {
           <section>
             <h3 className="mb-2 text-[13px] font-semibold">Componentes locais</h3>
             {!st.system_python && !installed("runtime") && (
-              <div className="mb-3 flex gap-2 rounded-lg border border-warn/30 bg-warn/10 p-3 text-xs text-warn">
-                <AlertTriangle size={15} className="shrink-0" />
-                {runtimeNote ?? "Python 3.11 a 3.14 não encontrado."} O editor continua funcionando sem IA.
+              <div className="mb-3 rounded-lg border border-warn/30 bg-warn/10 p-3 text-xs text-warn">
+                <div className="flex gap-2">
+                  <AlertTriangle size={15} className="shrink-0" />
+                  <span>{runtimeNote ?? "Python 3.11 a 3.14 não encontrado."} O editor continua funcionando sem IA.</span>
+                </div>
+                {isWindows && (
+                  <div className="mt-2.5 flex flex-wrap items-center gap-2 pl-6">
+                    <Button size="sm" variant="primary" disabled={!!pyJob} onClick={() => install("system_python")}>
+                      {pyJob ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />} Instalar Python 3.13 automaticamente
+                    </Button>
+                    <span className="text-fg-2">{pyJob?.stage ?? "Baixa de python.org (~30 MB), sem pedir administrador. Convive com outras versões."}</span>
+                    {pyError && !pyJob && <p className="w-full select-text text-bad">Última tentativa falhou: {pyError}</p>}
+                  </div>
+                )}
+              </div>
+            )}
+            {(st.system_python || installed("runtime")) && recMissing.length > 0 && (
+              <div className="mb-3 rounded-lg border border-accent/30 bg-accent-soft p-3 text-xs">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button size="sm" variant="primary" disabled={!!recJob} onClick={() => install(`recommended:${recModel}`)}>
+                    {recJob ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />} Instalar IA recomendada
+                  </Button>
+                  <span className="text-fg-2">Instala de uma vez o que falta: {recMissing.map(nameOf).join(", ")}.</span>
+                </div>
+                {recJob && (
+                  <div className="mt-2">
+                    <Progress value={recJob.progress} />
+                    <p className="mt-1 text-[11px] text-fg-3">{recJob.stage}</p>
+                  </div>
+                )}
+                {recError && !recJob && <p className="mt-1.5 select-text text-bad">Última tentativa falhou: {recError}</p>}
               </div>
             )}
             <div className="overflow-hidden rounded-lg border border-line">
@@ -116,16 +161,10 @@ export function AiManager() {
                   key={c.id}
                   c={c}
                   ramMb={st.hardware.ram_mb}
-                  blocked={c.requires.filter((r) => !installed(r))}
+                  needs={c.requires.filter((r) => !installed(r)).map(nameOf)}
                   job={running(`Instalar ${c.name}`)}
                   error={lastError(`Instalar ${c.name}`)}
-                  onInstall={async () => {
-                    try {
-                      await api.aiInstall(c.id);
-                    } catch (e) {
-                      toast("error", errorMessage(e));
-                    }
-                  }}
+                  onInstall={() => install(c.id)}
                   onRemove={async () => {
                     try {
                       await api.aiRemove(c.id);
@@ -214,7 +253,7 @@ export function AiManager() {
 function ComponentRow({
   c,
   ramMb,
-  blocked,
+  needs,
   job,
   error,
   onInstall,
@@ -223,7 +262,8 @@ function ComponentRow({
   error?: string | null;
   c: AiComponent;
   ramMb: number;
-  blocked: string[];
+  /** Dependências que ainda faltam: são instaladas junto, antes deste componente. */
+  needs: string[];
   job?: { progress: number; stage: string | null };
   onInstall: () => void;
   onRemove: () => void;
@@ -244,6 +284,7 @@ function ComponentRow({
           {c.languages.length ? ` · ${c.languages.join(", ")}` : ""} · licença {c.license}
         </p>
         {c.note && <p className="mt-1 text-[11px] text-fg-2">{c.note}</p>}
+        {needs.length > 0 && !c.installed && !job && <p className="mt-1 text-[11px] text-fg-3">Instala também: {needs.join(", ")}.</p>}
         {heavy && !c.installed && <p className="mt-1 text-[11px] text-warn">Pesado para este computador ({Math.round(ramMb / 1024)} GB de RAM): pode ficar muito lento.</p>}
         {error && !job && !c.installed && <p className="mt-1 text-[11px] text-bad select-text">Última tentativa falhou: {error}</p>}
         {job && (
@@ -261,8 +302,8 @@ function ComponentRow({
             </Button>
           )
         ) : (
-          <Button size="sm" variant="primary" disabled={!!job || blocked.length > 0} title={blocked.length ? `Requer: ${blocked.join(", ")}` : undefined} onClick={onInstall}>
-            {job ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />} {blocked.length ? "Requer outro componente" : "Instalar"}
+          <Button size="sm" variant="primary" disabled={!!job} title={needs.length ? `Instala também: ${needs.join(", ")}` : undefined} onClick={onInstall}>
+            {job ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />} Instalar
           </Button>
         )}
       </div>

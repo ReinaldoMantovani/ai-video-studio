@@ -8,6 +8,7 @@ pub mod ffmpeg;
 pub mod fonts;
 pub mod hwaccel;
 pub mod probe;
+pub mod process;
 pub mod render;
 pub mod validate;
 

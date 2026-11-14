@@ -1,4 +1,5 @@
 import { getCurrentWebview } from "@tauri-apps/api/webview";
+import { ErrorBoundary } from "../ErrorBoundary";
 import clsx from "clsx";
 import { ArrowLeft, Download, Redo2, Save, Undo2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -69,21 +70,29 @@ export function Editor() {
         <Panel defaultSize={62} minSize={30}>
           <PanelGroup direction="horizontal" autoSaveId="avs-editor-h">
             <Panel defaultSize={22} minSize={14} collapsible>
-              <LeftPanel />
+              <ErrorBoundary area="o painel lateral" resetKey={p.id}>
+                <LeftPanel />
+              </ErrorBoundary>
             </Panel>
             <Handle dir="h" />
             <Panel defaultSize={56} minSize={30}>
-              <Player safeArea={preset?.safety.safe_area ?? null} />
+              <ErrorBoundary area="o player" resetKey={p.id}>
+                <Player safeArea={preset?.safety.safe_area ?? null} />
+              </ErrorBoundary>
             </Panel>
             <Handle dir="h" />
             <Panel defaultSize={22} minSize={14} collapsible>
-              <Inspector />
+              <ErrorBoundary area="o painel de propriedades" resetKey={p.id}>
+                <Inspector />
+              </ErrorBoundary>
             </Panel>
           </PanelGroup>
         </Panel>
         <Handle dir="v" />
         <Panel defaultSize={38} minSize={18}>
-          <Timeline />
+          <ErrorBoundary area="a timeline" resetKey={p.id}>
+            <Timeline />
+          </ErrorBoundary>
         </Panel>
       </PanelGroup>
       <ExportDialog open={exportOpen} onClose={() => setExportOpen(false)} />

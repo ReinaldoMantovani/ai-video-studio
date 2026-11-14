@@ -2,6 +2,20 @@
 
 ## 0.8.2
 
+Correções do primeiro uso real no Windows:
+
+- **Janelas de terminal piscando:** no Windows, cada processo do FFmpeg, Python ou `nvidia-smi` abria uma janela de console. Isso acontecia várias vezes por segundo ao gerar o preview, e era a "tela preta" que travava a interface. Agora todo processo filho é criado sem janela (`CREATE_NO_WINDOW`, em `avs_media::process::command`).
+- **Menos processos sem necessidade:**
+  - a tela inicial executava o `nvidia-smi` a cada 3 s; agora o resultado fica 10 s em cache e, sem GPU NVIDIA, ele não é procurado de novo;
+  - o Gerenciador de IA iniciava até 9 processos Python a cada 15 s; agora a detecção fica 2 min em cache e é refeita ao instalar ou remover componentes.
+- **Erros de interface não deixam mais a tela vazia:**
+  - cada área do editor (abas, player, propriedades, timeline) e o app inteiro têm uma proteção que mostra o erro com "Tentar de novo";
+  - o resto da interface continua funcionando;
+  - os detalhes vão para `logs/ui-errors.log` na biblioteca.
+- **Instalação da IA mais simples:**
+  - qualquer componente pode ser instalado direto, e o que ele precisa é instalado antes, na ordem certa (por exemplo, um modelo Whisper instala o ambiente e o motor de transcrição);
+  - o botão **Instalar IA recomendada** instala de uma vez análise, rostos, transcrição e o Whisper do perfil;
+  - no Windows sem Python compatível, o botão **Instalar Python 3.13 automaticamente** usa o `py install` ou o winget, sem pedir administrador.
 - **IA local com Python novo demais (achado no primeiro uso real no Windows):**
   - o app aceitava qualquer Python ≥ 3.10 e, no Windows, `py -3` escolhe o mais novo; com o Python 3.15, que ainda não tem wheels de onnxruntime/av, a instalação dos componentes falharia;
   - agora só aceita do 3.11 ao 3.14, procurando primeiro as versões suportadas (`py -3.12`, `-3.13`…);

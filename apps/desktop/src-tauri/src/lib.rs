@@ -36,6 +36,24 @@ async fn library_root(s: State<'_, Studio>) -> Res<PathBuf> {
     Ok(s.library_root().to_path_buf())
 }
 
+/// Erro de interface capturado pelo ErrorBoundary: vai para `logs/ui-errors.log`
+/// da biblioteca, para diagnóstico (o app gráfico não tem console).
+#[tauri::command]
+async fn report_ui_error(s: State<'_, Studio>, message: String, stack: String) -> Res<String> {
+    use std::io::Write;
+    let dir = s.library_root().join("logs");
+    let path = dir.join("ui-errors.log");
+    tracing::error!(target: "avs::ui", %message, "erro de interface");
+    let _ = std::fs::create_dir_all(&dir);
+    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(&path) {
+        let when = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
+        let msg: String = message.chars().take(2000).collect();
+        let st: String = stack.chars().take(8000).collect();
+        let _ = writeln!(f, "--- {when} (unix) v{}\n{msg}\n{st}\n", env!("CARGO_PKG_VERSION"));
+    }
+    Ok(path.to_string_lossy().into_owned())
+}
+
 #[tauri::command]
 async fn system_info(s: State<'_, Studio>) -> Res<SystemInfo> {
     let st = studio(&s);
@@ -510,6 +528,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             library_root,
+            report_ui_error,
             system_info,
             encoders,
             presets,

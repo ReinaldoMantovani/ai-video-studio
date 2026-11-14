@@ -3,11 +3,12 @@
 //! (`$/cancel`) com encerramento forçado se o worker não responder.
 
 use crate::{AiError, Progress, Result};
+use avs_media::process::command;
 use avs_media::CancelToken;
 use serde_json::{json, Value};
 use std::io::{BufRead, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
@@ -23,7 +24,7 @@ impl WorkerEnv {
     /// Executa `method` e devolve `result`. Erros do worker viram `AiError`
     /// com a mensagem real.
     pub fn call(&self, method: &str, params: Value, progress: Progress, cancel: &CancelToken, timeout: Option<Duration>) -> Result<Value> {
-        let mut cmd = Command::new(&self.python);
+        let mut cmd = command(&self.python);
         cmd.arg("-u").arg("-m").arg("avs_worker");
         cmd.env("PYTHONPATH", &self.worker_dir).env("PYTHONIOENCODING", "utf-8").env("PYTHONNOUSERSITE", "1");
         cmd.current_dir(&self.worker_dir).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());

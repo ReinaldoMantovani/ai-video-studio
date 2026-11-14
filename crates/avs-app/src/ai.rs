@@ -102,9 +102,19 @@ impl Studio {
 
     /// Instala um componente em segundo plano (job com progresso).
     pub fn ai_install(&self, component: &str) -> AppResult<Id> {
-        let (comps, _) = runtime::components(&self.0.ai);
-        let c = comps.iter().find(|c| c.id == component).ok_or_else(|| AppError::new("not_found", format!("componente desconhecido: {component}")))?;
-        self.enqueue(JobPayload::AiInstall { component: component.into() }, &format!("Instalar {}", c.name))
+        let title = if let Some(model) = component.strip_prefix("recommended:") {
+            if !runtime::WHISPER_MODELS.iter().any(|(m, _, _)| *m == model) {
+                return Err(AppError::new("invalid", format!("modelo Whisper desconhecido: {model}")));
+            }
+            "Instalar IA recomendada".to_string()
+        } else if component == "system_python" {
+            "Instalar Python 3.13".to_string()
+        } else {
+            let (comps, _) = runtime::components(&self.0.ai);
+            let c = comps.iter().find(|c| c.id == component).ok_or_else(|| AppError::new("not_found", format!("componente desconhecido: {component}")))?;
+            format!("Instalar {}", c.name)
+        };
+        self.enqueue(JobPayload::AiInstall { component: component.into() }, &title)
     }
 
     pub fn ai_remove(&self, component: &str) -> AppResult<()> {

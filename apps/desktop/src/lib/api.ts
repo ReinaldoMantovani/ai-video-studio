@@ -54,6 +54,7 @@ async function call<T>(cmd: string, args?: Record<string, unknown>): Promise<T> 
 
 export const api = {
   libraryRoot: () => call<string>("library_root"),
+  reportUiError: (message: string, stack: string) => call<string>("report_ui_error", { message, stack }),
   systemInfo: () => call<SystemInfo>("system_info"),
   encoders: () => call<EncoderInfo[]>("encoders"),
   presets: () => call<EditorialPreset[]>("presets"),

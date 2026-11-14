@@ -188,13 +188,14 @@ node e2e/run.mjs --app /usr/bin/ai-video-studio --installed   # contra o pacote 
 | `editar_automaticamente_e_revisao` | sem análise → "Analisar e aplicar" → revisão de qualidade |
 | `texto` | inserir um título pela aba Texto |
 | `analise_e_pausas` | análise real, plano de pausas, aplicar (0:12 → 0:08/0:09) |
+| `legendas` | todas as abas do painel lateral abrem sem derrubar a interface |
 | `exportar` | exportação pela interface, aviso de validação e arquivo com vídeo e áudio |
 | `recuperacao_apos_fechar_sem_salvar` | marcador sem salvar, encerrar o app, reabrir e recuperar |
 | `reproducao_e_preview_por_janelas` | reprodução **real** e troca de janela em 2:00 numa timeline de 5 min |
 | `cortes_verticais` | sugerir, criar e abrir um corte 1080×1920 |
 
 Resultados neste ambiente (Xvfb, 2 vCPUs):
-- **14/14** com o binário de release;
+- **15/15** com o binário de release;
 - **14/14** contra o `.deb` 0.8.0 instalado (`--installed`);
 - 4/4 contra o AppImage extraído (dashboard, presets, exportação e reprodução, com o GStreamer empacotado).
 

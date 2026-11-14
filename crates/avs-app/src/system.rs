@@ -1,8 +1,9 @@
 //! Estado do hardware: CPU, memória, disco, GPU (quando detectável) e encoders.
 
+use avs_media::process::command;
 use serde::Serialize;
 use std::path::Path;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 use std::sync::Mutex;
 use sysinfo::{Disks, System};
 use ts_rs::TS;
@@ -79,17 +80,38 @@ impl SystemMonitor {
 
 /// GPUs NVIDIA via `nvidia-smi` (quando instalado). Outros fabricantes
 /// aparecem pelos encoders funcionais detectados em `hwaccel`.
+///
+/// O painel consulta a cada poucos segundos: o resultado fica em cache por 10 s
+/// e, se o `nvidia-smi` não existir, ele não é procurado de novo.
 fn nvidia_gpus() -> Vec<GpuInfo> {
-    let out = Command::new("nvidia-smi")
+    use std::sync::Mutex;
+    use std::time::{Duration, Instant};
+    static CACHE: Mutex<Option<(Instant, Option<Vec<GpuInfo>>)>> = Mutex::new(None);
+    let mut g = CACHE.lock().unwrap();
+    if let Some((at, v)) = g.as_ref() {
+        match v {
+            None => return vec![],
+            Some(v) if at.elapsed() < Duration::from_secs(10) => return v.clone(),
+            _ => {}
+        }
+    }
+    let r = query_nvidia();
+    *g = Some((Instant::now(), r.clone()));
+    r.unwrap_or_default()
+}
+
+/// `None` = `nvidia-smi` ausente ou sem GPU NVIDIA (não adianta tentar de novo).
+fn query_nvidia() -> Option<Vec<GpuInfo>> {
+    let out = command("nvidia-smi")
         .args(["--query-gpu=name,memory.total,memory.used,utilization.gpu", "--format=csv,noheader,nounits"])
         .stdin(Stdio::null())
         .stderr(Stdio::null())
         .output();
-    let Ok(out) = out else { return vec![] };
+    let Ok(out) = out else { return None };
     if !out.status.success() {
-        return vec![];
+        return None;
     }
-    String::from_utf8_lossy(&out.stdout)
+    let v: Vec<GpuInfo> = String::from_utf8_lossy(&out.stdout)
         .lines()
         .filter_map(|l| {
             let f: Vec<&str> = l.split(',').map(|x| x.trim()).collect();
@@ -101,5 +123,6 @@ fn nvidia_gpus() -> Vec<GpuInfo> {
                 utilization_pct: f[3].parse().ok(),
             })
         })
-        .collect()
+        .collect();
+    (!v.is_empty()).then_some(v)
 }

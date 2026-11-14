@@ -278,6 +278,23 @@ const scenarios = {
     await d.waitFor(async () => (await d.exec(`return [...document.querySelectorAll('[title]')].filter(e => e.title.startsWith('Título —')).length`)) >= 1, { what: "clipe de texto na timeline" });
   },
 
+  async legendas() {
+    // Cada aba do painel esquerdo abre sem derrubar a interface (tela preta).
+    await openProject("E2E Edição");
+    for (const [label, expect] of [
+      ["Legendas", "Importar SRT ou VTT"],
+      ["Transições", "Dissolver cruzado"],
+      ["Histórico", "Versões salvas"],
+      ["IA", "Analisar"],
+      ["Mídia", "E2E"],
+    ]) {
+      await tab(label);
+      await d.waitFor(async () => (await d.bodyText()).includes(expect), { what: `aba ${label}` });
+      const n = await d.exec(`return document.getElementById('root')?.childElementCount ?? 0`);
+      if (!n) throw new Error(`a interface sumiu ao abrir ${label}`);
+    }
+  },
+
   async analise_e_pausas() {
     await openProject("E2E Pausas");
     await tab("IA");

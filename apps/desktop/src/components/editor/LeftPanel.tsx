@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ErrorBoundary } from "../ErrorBoundary";
 import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
 import clsx from "clsx";
 import { AudioLines, Bookmark, Captions, Download, MessageSquareText, Smartphone, Sparkles, FileWarning, Film, FolderInput, History, Image, Link2, Plus, Shuffle, Trash2, Type, Upload } from "lucide-react";
@@ -16,6 +17,7 @@ import { ShortsPanel } from "./ShortsPanel";
 import { AssistantPanel } from "./AssistantPanel";
 
 type Tab = "media" | "ai" | "assistant" | "shorts" | "text" | "captions" | "transitions" | "history";
+const TAB_LABEL: Record<Tab, string> = { media: "Mídia", ai: "IA", assistant: "Assistente", shorts: "Cortes", text: "Texto", captions: "Legendas", transitions: "Transições", history: "Histórico" };
 
 export function LeftPanel() {
   const [tab, setTab] = useState<Tab>("media");
@@ -39,14 +41,17 @@ export function LeftPanel() {
         />
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
-        {tab === "media" && <MediaBin />}
-        {tab === "ai" && <AiPanel />}
-        {tab === "assistant" && <AssistantPanel key={projectId} />}
-        {tab === "shorts" && <ShortsPanel key={projectId} />}
-        {tab === "text" && <TextPanel />}
-        {tab === "captions" && <CaptionsPanel />}
-        {tab === "transitions" && <TransitionsPanel />}
-        {tab === "history" && <HistoryPanel />}
+        {/* Um erro numa aba fica nela: o resto do editor continua funcionando. */}
+        <ErrorBoundary area={`a aba ${TAB_LABEL[tab]}`} resetKey={`${tab}:${projectId}`}>
+          {tab === "media" && <MediaBin />}
+          {tab === "ai" && <AiPanel />}
+          {tab === "assistant" && <AssistantPanel key={projectId} />}
+          {tab === "shorts" && <ShortsPanel key={projectId} />}
+          {tab === "text" && <TextPanel />}
+          {tab === "captions" && <CaptionsPanel />}
+          {tab === "transitions" && <TransitionsPanel />}
+          {tab === "history" && <HistoryPanel />}
+        </ErrorBoundary>
       </div>
     </div>
   );
