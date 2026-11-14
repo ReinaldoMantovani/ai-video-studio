@@ -18,12 +18,12 @@ use std::time::{Duration, Instant};
 #[derive(Debug, thiserror::Error)]
 pub enum MediaError {
     #[error(
-        "FFmpeg/FFprobe não encontrado. Instale o FFmpeg (macOS: `brew install ffmpeg`; Linux: `sudo apt install ffmpeg`) ou defina AVS_FFMPEG_DIR. ({0})"
+        "FFmpeg/FFprobe não encontrado. Instale o FFmpeg (macOS: `brew install ffmpeg-full`; Linux: `sudo apt install ffmpeg`) ou defina AVS_FFMPEG_DIR. ({0})"
     )]
     ToolNotFound(String),
     #[error("falha ao executar {tool}: {message}")]
     Spawn { tool: String, message: String },
-    #[error("{tool} terminou com erro (código {code:?}): {stderr}")]
+    #[error("{tool} terminou com erro (código {code:?}): {stderr}{}", missing_filter_hint(.stderr))]
     Failed { tool: String, code: Option<i32>, stderr: String },
     #[error("operação cancelada")]
     Cancelled,
@@ -100,6 +100,11 @@ impl FfmpegTools {
             dirs.push(PathBuf::from(d));
         }
         dirs.extend(extra_dirs.iter().cloned());
+        // macOS: a fórmula `ffmpeg` do Homebrew é enxuta (sem drawtext); a completa,
+        // `ffmpeg-full`, não entra no PATH (keg-only). Se existir, tem preferência.
+        if cfg!(target_os = "macos") {
+            dirs.extend(["/opt/homebrew/opt/ffmpeg-full/bin", "/usr/local/opt/ffmpeg-full/bin"].map(PathBuf::from));
+        }
         let pick = |name: &str| dirs.iter().map(|d| d.join(exe(name))).find(|p| p.is_file()).or_else(|| find_in_path(name));
         let ffmpeg = pick("ffmpeg").ok_or_else(|| MediaError::ToolNotFound("ffmpeg".into()))?;
         let ffprobe = pick("ffprobe").ok_or_else(|| MediaError::ToolNotFound("ffprobe".into()))?;
@@ -275,6 +280,18 @@ pub fn run_with_progress(mut cmd: Command, cancel: &CancelToken, mut on_progress
         return Err(MediaError::Failed { tool, code: status.code(), stderr: tail(&err, 15) });
     }
     Ok(())
+}
+
+/// Builds enxutas do FFmpeg (ex.: a fórmula `ffmpeg` do Homebrew desde 2026) vêm
+/// sem filtros que o app usa, como `drawtext` (textos e legendas).
+fn missing_filter_hint(stderr: &str) -> &'static str {
+    if !stderr.contains("No such filter") {
+        ""
+    } else if cfg!(target_os = "macos") {
+        "\n\nEste FFmpeg não tem todos os filtros necessários. Instale a versão completa: `brew install ffmpeg-full`."
+    } else {
+        "\n\nEste FFmpeg não tem todos os filtros necessários (ex.: drawtext, que exige libfreetype). Instale uma build completa do FFmpeg."
+    }
 }
 
 pub fn tail(s: &str, n: usize) -> String {

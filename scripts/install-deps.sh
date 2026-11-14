@@ -5,7 +5,7 @@ set -euo pipefail
 if [[ "$(uname)" == "Darwin" ]]; then
   command -v brew >/dev/null || { echo "Instale o Homebrew: https://brew.sh"; exit 1; }
   xcode-select -p >/dev/null 2>&1 || xcode-select --install
-  brew install ffmpeg node rustup-init
+  brew install ffmpeg-full node rustup-init   # ffmpeg-full: a fórmula `ffmpeg` vem sem drawtext
   command -v cargo >/dev/null || rustup-init -y
 elif command -v apt-get >/dev/null; then
   sudo apt-get update

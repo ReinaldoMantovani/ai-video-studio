@@ -59,7 +59,8 @@ jobs:
       # Windows: o FFmpeg (build estático "full" do gyan.dev, GPL) vai junto do app
       # (resources/ffmpeg). macOS: não há build estático arm64 confiável para
       # empacotar e o do Homebrew depende de dylibs do Homebrew → o usuário instala
-      # com `brew install ffmpeg` (o app procura em /opt/homebrew/bin e /usr/local/bin).
+      # com `brew install ffmpeg-full` (a fórmula `ffmpeg` é enxuta, sem drawtext; o app
+      # procura primeiro em $(brew --prefix)/opt/ffmpeg-full/bin).
       # Linux: o .deb/.rpm declaram a dependência do pacote `ffmpeg` da distribuição.
       - uses: FedericoCarboni/setup-ffmpeg@v3
         if: runner.os == 'Windows'
@@ -111,7 +112,7 @@ jobs:
           args: ${{ matrix.args }} ${{ env.SIGN_ARGS }}
           tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
           releaseName: "AI Video Studio ${{ github.ref_name }}"
-          releaseBody: "Veja o CHANGELOG.md. Windows: FFmpeg incluído. macOS: instale o FFmpeg com `brew install ffmpeg`. Linux: o .deb/.rpm instalam o FFmpeg da distribuição; o AppImage usa o FFmpeg do sistema."
+          releaseBody: "Veja o CHANGELOG.md. Windows: FFmpeg incluído. macOS: instale o FFmpeg com `brew install ffmpeg-full`. Linux: o .deb/.rpm instalam o FFmpeg da distribuição; o AppImage usa o FFmpeg do sistema."
           releaseDraft: true
           prerelease: false
 
